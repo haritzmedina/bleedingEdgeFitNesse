@@ -1,34 +1,24 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
+VAGRANTFILE_API_VERSION = "2"
 
-#
-# FitNesse VM containing:
-# - openjdk
-# - FitNesse
-#
-# Each component is provisioned via a Puppet manifest in the manifests directory.
-#
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |fitnesse_config|
 
-Vagrant::Config.run do |config|
+    fitnesse_config.vm.box = "puppetlabs/ubuntu-14.04-64-puppet"
 
-  config.vm.define :fitnesse do |fitnesse_config|
-    fitnesse_config.vm.box_url = "http://puppet-vagrant-boxes.puppetlabs.com/fedora-18-x64-vbox4210.box"
-    fitnesse_config.vm.box = "fedora18"
-    fitnesse_config.vm.customize [
-     "modifyvm", :id,
-     "--memory", "2048"
-    ]
-    fitnesse_config.vm.customize ["modifyvm", :id, "--cpus", "2"]
-    fitnesse_config.vm.customize ["modifyvm", :id, "--ioapic", "on"]
-    fitnesse_config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-    fitnesse_config.vm.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
-    fitnesse_config.vm.forward_port 1234, 1235
+    fitnesse_config.vm.provider :virtualbox do |vb|
+        vb.customize [
+                "modifyvm", :id,
+                "--memory", "2048"
+               ]
+        vb.customize ["modifyvm", :id, "--cpus", "2"]
+        vb.customize ["modifyvm", :id, "--vram", "32"]
+    end
+
+    fitnesse_config.vm.network "private_network", ip: "192.168.10.10"
     
     # Enable the Puppet provisioner
-    fitnesse_config.vm.provision :puppet do |puppet|
-      puppet.manifest_file = "singlevm.pp"
-      puppet.manifests_path = "manifests"
+    fitnesse_config.vm.provision :puppet, run: "always" do |puppet|
+      puppet.environment_path = "environment"
+      puppet.environment = "production"
     end
-  end
 
 end
